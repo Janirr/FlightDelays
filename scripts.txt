@@ -1,0 +1,63 @@
+// If you are not using the linux big data VM
+ -> git clone https://github.com/BigDataBatchProcessing/HadoopHiveSparkDocker
+
+cd ~/BigData/HadoopHiveSparkDocker/
+docker compose stop 
+docker compose up -d
+docker run -d \
+ --name kafka \
+ --hostname kafka \
+ --network hadoophivesparkdocker_sparknet \
+ --ip 172.28.1.10 \
+ -p 9092:9092 -p 9093:9093 \
+ -e KAFKA_NODE_ID=1 \
+ -e KAFKA_PROCESS_ROLES=broker,controller \
+ -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093 \
+ -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://172.28.1.10:9092 \
+ -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+ -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@172.28.1.10:9093 \
+ -e KAFKA_LOG_DIRS=/tmp/kraft-combined-logs \
+ -e PS1="\u@\h:\w\$ " \
+ --workdir /opt/kafka \
+ apache/kafka:4.0.0
+docker run -d \
+  --name mongodb \
+  --hostname mongodb \
+  --network hadoophivesparkdocker_sparknet \
+  -p 27017:27017 \
+  -v mongodb_data:/data/db \
+  -e MONGO_INITDB_ROOT_USERNAME=mongoadmin \
+  -e MONGO_INITDB_ROOT_PASSWORD=secret \
+  mongo:4.4
+docker start mongodb
+docker start kafka
+
+# Copy files (go to the path for your downloaded files)
+docker cp TestProducer.jar kafka:/
+docker cp flights-2015 kafka:/
+docker cp airports.csv hadoophivesparkdocker-master-1:/tmp/airports.csv
+docker cp FlightDelaysStreaming.py hadoophivesparkdocker-master-1:/
+
+# KAFKA
+docker exec -it kafka bash
+cd /opt/kafka
+./bin/kafka-topics.sh --delete --bootstrap-server kafka:9092 --topic kafka-input
+./bin/kafka-topics.sh kafka-topics.sh --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 3 --topic kafka-input
+cd /
+java -cp /opt/kafka/libs/*:TestProducer.jar com.example.bigdata.TestProducer flights-2015 15 kafka-input 1 kafka:9092
+
+# SPARK
+docker exec -it hadoophivesparkdocker1-master-1 bash
+hdfs dfs -put /tmp/airports.csv /user/student/input/
+spark-submit \
+  --master yarn \
+  --deploy-mode cluster \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0 \
+  FlightDelaysStreaming3.py
+
+# MONGO
+docker exec -it mongodb bash
+mongo -u mongoadmin -p secret --authenticationDatabase admin
+use flight_db
+db.flight_aggregates.find().pretty()
+db.flight_anomalies.find().pretty()
