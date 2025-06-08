@@ -1,0 +1,1 @@
+// miejsce docelowe jest tworzone razem z programem

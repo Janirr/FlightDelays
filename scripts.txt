@@ -47,13 +47,13 @@ cd /
 java -cp /opt/kafka/libs/*:TestProducer.jar com.example.bigdata.TestProducer flights-2015 15 kafka-input 1 kafka:9092
 
 # SPARK
-docker exec -it hadoophivesparkdocker1-master-1 bash
+docker exec -it hadoophivesparkdocker-master-1 bash
 hdfs dfs -put /tmp/airports.csv /user/student/input/
 spark-submit \
   --master yarn \
   --deploy-mode cluster \
   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0 \
-  FlightDelaysStreaming3.py
+  FlightDelaysStreaming.py
 
 # MONGO
 docker exec -it mongodb bash

@@ -1,0 +1,4 @@
+docker exec -it kafka bash
+cd /opt/kafka
+./bin/kafka-topics.sh --delete --bootstrap-server kafka:9092 --topic kafka-input
+./bin/kafka-topics.sh kafka-topics.sh --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 3 --topic kafka-input

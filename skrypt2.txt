@@ -1,0 +1,5 @@
+docker cp TestProducer.jar kafka:/
+docker cp flights-2015 kafka:/
+docker exec -it kafka bash
+cd /
+java -cp /opt/kafka/libs/*:TestProducer.jar com.example.bigdata.TestProducer flights-2015 15 kafka-input 1 kafka:9092

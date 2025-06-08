@@ -1,0 +1,5 @@
+docker exec -it mongodb bash
+mongo -u mongoadmin -p secret --authenticationDatabase admin
+use flight_db
+db.flight_aggregates.find().pretty()
+db.flight_anomalies.find().pretty()

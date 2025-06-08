@@ -1,0 +1,9 @@
+docker cp airports.csv hadoophivesparkdocker-master-1:/tmp/airports.csv
+docker cp FlightDelaysStreaming.py hadoophivesparkdocker-master-1:/
+docker exec -it hadoophivesparkdocker-master-1 bash
+hdfs dfs -put /tmp/airports.csv /user/student/input/
+spark-submit \
+  --master yarn \
+  --deploy-mode cluster \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0 \
+  FlightDelaysStreaming.py
